@@ -1,11 +1,19 @@
-# Use a Maven image to build the app
-FROM maven:3.8.5-openjdk-17 AS build
+# Multi-stage build for Render
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY . .
+
+# Copy project files
+COPY pom.xml ./
+COPY src src
+
+# Run maven build (using the installed maven, safer than wrapper)
 RUN mvn clean package -DskipTests
 
-# Run the app
-FROM openjdk:17-jdk-slim
+# Run stage
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+# Copy the built jar (using wildcard to be safe)
 COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
