@@ -1,59 +1,43 @@
 package com.milmgt.controller;
 
-import com.milmgt.dto.AssetRequest;
-import com.milmgt.dto.TransferRequest;
-import com.milmgt.entity.Asset;
+import com.milmgt.entity.Asset; // FIXED
+import com.milmgt.model.TransferLog;
 import com.milmgt.service.AssetService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assets")
-@RequiredArgsConstructor
 public class AssetController {
 
-    private final AssetService assetService;
+    @Autowired
+    private AssetService assetService;
 
-    // 1. View Assets (Filtered) - Open to everyone authenticated
     @GetMapping
-    public ResponseEntity<List<Asset>> getAllAssets(@RequestParam(required = false) Long baseId) {
-        if (baseId != null) return ResponseEntity.ok(assetService.getAssetsByBase(baseId));
-        return ResponseEntity.ok(assetService.getAllAssets());
-    }
+    public List<Asset> getAllAssets() { return assetService.getAllAssets(); }
 
-    // 2. Add Asset - ADMIN ONLY
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Asset> addAsset(@RequestBody AssetRequest request) {
-        return ResponseEntity.ok(assetService.addAsset(request));
-    }
+    public Asset addAsset(@RequestBody Asset asset) { return assetService.addAsset(asset); }
 
-    // 3. Transfer - ADMIN & LOGISTICS
     @PostMapping("/transfer")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'LOGISTICS')")
-    public ResponseEntity<String> transferAsset(@RequestBody TransferRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        assetService.transferAsset(request, username);
-        return ResponseEntity.ok("Transfer successful");
+    public void transferAsset(@RequestBody Map<String, Long> payload) {
+        assetService.transferAsset(payload.get("assetId"), payload.get("sourceBaseId"), payload.get("destBaseId"));
     }
 
-    // 4. Assign to Soldier - COMMANDER ONLY
     @PutMapping("/{id}/assign")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'COMMANDER')")
-    public ResponseEntity<String> assignAsset(@PathVariable Long id) {
-        assetService.updateStatus(id, "ASSIGNED");
-        return ResponseEntity.ok("Asset Assigned to Personnel");
+    public void assignAsset(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        assetService.assignAsset(id, payload.get("soldierName"));
     }
 
-    // 5. Expend Asset - COMMANDER ONLY
     @PutMapping("/{id}/expend")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'COMMANDER')")
-    public ResponseEntity<String> expendAsset(@PathVariable Long id) {
-        assetService.updateStatus(id, "EXPENDED");
-        return ResponseEntity.ok("Asset Marked as Expended");
+    public void expendAsset(@PathVariable Long id) {
+        assetService.expendAsset(id);
+    }
+
+    @GetMapping("/transfers/history")
+    public List<TransferLog> getTransferHistory() {
+        return assetService.getTransferHistory();
     }
 }

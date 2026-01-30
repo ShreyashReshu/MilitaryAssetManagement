@@ -1,87 +1,78 @@
 package com.milmgt.service;
 
-import com.milmgt.dto.AssetRequest;
-import com.milmgt.dto.TransferRequest;
-import com.milmgt.entity.*;
-import com.milmgt.exception.ResourceNotFoundException;
-import com.milmgt.exception.BadRequestException;
-import com.milmgt.repository.*;
-import lombok.RequiredArgsConstructor;
+import com.milmgt.entity.Asset;
+import com.milmgt.entity.Base;
+import com.milmgt.model.TransferLog;
+import com.milmgt.repository.AssetRepository;
+import com.milmgt.repository.BaseRepository;
+import com.milmgt.repository.TransferLogRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class AssetService {
 
-    private final AssetRepository assetRepository;
-    private final BaseRepository baseRepository;
-    private final TransactionRepository transactionRepository;
-    private final AuditLogRepository auditLogRepository;
+    @Autowired
+    private AssetRepository assetRepository;
+
+    @Autowired
+    private BaseRepository baseRepository;
+
+    @Autowired
+    private TransferLogRepository transferLogRepository;
 
     public List<Asset> getAllAssets() {
         return assetRepository.findAll();
     }
-    
-    // NEW: Filter Logic
-    public List<Asset> getAssetsByBase(Long baseId) {
-        return assetRepository.findByCurrentBaseId(baseId);
-    }
 
-    public Asset addAsset(AssetRequest request) {
-        Base base = baseRepository.findById(request.getBaseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Base not found"));
-
-        Asset asset = Asset.builder()
-                .name(request.getName())
-                .serialNumber(request.getSerialNumber())
-                .type(request.getType())
-                .status("ACTIVE")
-                .currentBase(base)
-                .build();
+    public Asset addAsset(Asset asset) {
+        if (asset.getCurrentBase() == null || asset.getCurrentBase().getId() == null) {
+            throw new RuntimeException("Asset must be assigned to a Base (ID required)");
+        }
+        Base base = baseRepository.findById(asset.getCurrentBase().getId())
+                .orElseThrow(() -> new RuntimeException("Base not found"));
+        
+        asset.setCurrentBase(base);
+        asset.setStatus("ACTIVE");
         return assetRepository.save(asset);
     }
 
-    @Transactional
-    public void transferAsset(TransferRequest request, String username) {
-        Asset asset = assetRepository.findById(request.getAssetId())
-                .orElseThrow(() -> new ResourceNotFoundException("Asset not found"));
+    public void transferAsset(Long assetId, Long sourceBaseId, Long destBaseId) {
+        Asset asset = assetRepository.findById(assetId)
+                .orElseThrow(() -> new RuntimeException("Asset not found"));
+        Base source = baseRepository.findById(sourceBaseId)
+                .orElseThrow(() -> new RuntimeException("Source Base not found"));
+        Base dest = baseRepository.findById(destBaseId)
+                .orElseThrow(() -> new RuntimeException("Dest Base not found"));
 
-        if (!asset.getCurrentBase().getId().equals(request.getSourceBaseId())) {
-            throw new BadRequestException("Asset is not at source base!");
+        if (!asset.getCurrentBase().getId().equals(sourceBaseId)) {
+            throw new RuntimeException("Asset is not at the source base");
         }
-        Base destBase = baseRepository.findById(request.getDestBaseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Destination base invalid"));
 
-        asset.setCurrentBase(destBase);
+        // 1. Move Asset
+        asset.setCurrentBase(dest);
         assetRepository.save(asset);
 
-        AssetTransaction transaction = AssetTransaction.builder()
-                .asset(asset)
-                .type("TRANSFER")
-                .sourceBase(asset.getCurrentBase())
-                .destBase(destBase)
-                .timestamp(LocalDateTime.now())
-                .initiatedBy(username)
-                .build();
-        transactionRepository.save(transaction);
-
-        AuditLog log = AuditLog.builder()
-                .action("TRANSFER_ASSET")
-                .username(username)
-                .timestamp(LocalDateTime.now())
-                .details("Transferred " + asset.getSerialNumber() + " to " + destBase.getName())
-                .build();
-        auditLogRepository.save(log);
+        // 2. Log History
+        TransferLog log = new TransferLog(asset.getName(), source.getName(), dest.getName());
+        transferLogRepository.save(log);
     }
 
-    // NEW: Generic Status Updater (Assignments & Expenditures)
-    public void updateStatus(Long assetId, String newStatus) {
-        Asset asset = assetRepository.findById(assetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Asset not found"));
-        asset.setStatus(newStatus);
+    public void assignAsset(Long id, String soldierName) {
+        Asset asset = assetRepository.findById(id).orElseThrow();
+        asset.setStatus("ASSIGNED");
         assetRepository.save(asset);
+    }
+
+    public void expendAsset(Long id) {
+        Asset asset = assetRepository.findById(id).orElseThrow();
+        asset.setStatus("EXPENDED");
+        assetRepository.save(asset);
+    }
+
+    public List<TransferLog> getTransferHistory() {
+        return transferLogRepository.findAllByOrderByTimestampDesc();
     }
 }
