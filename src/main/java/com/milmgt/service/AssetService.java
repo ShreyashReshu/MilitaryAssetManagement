@@ -2,7 +2,7 @@ package com.milmgt.service;
 
 import com.milmgt.entity.Asset;
 import com.milmgt.entity.Base;
-import com.milmgt.entity.AuditLog; 
+import com.milmgt.entity.AuditLog;
 import com.milmgt.model.TransferLog;
 import com.milmgt.repository.AssetRepository;
 import com.milmgt.repository.BaseRepository;
@@ -21,9 +21,7 @@ public class AssetService {
     @Autowired private TransferLogRepository transferLogRepository;
     @Autowired private AuditLogRepository auditLogRepository;
 
-    public List<Asset> getAllAssets() {
-        return assetRepository.findAll();
-    }
+    public List<Asset> getAllAssets() { return assetRepository.findAll(); }
 
     public Asset addAsset(Asset asset) {
         if (asset.getCurrentBase() == null || asset.getCurrentBase().getId() == null) {
@@ -36,13 +34,18 @@ public class AssetService {
         asset.setStatus("ACTIVE");
         Asset saved = assetRepository.save(asset);
 
-        // This line caused your error - it works now because File 1 is fixed
         auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
         return saved;
     }
 
     public void transferAsset(Long assetId, Long sourceBaseId, Long destBaseId) {
         Asset asset = assetRepository.findById(assetId).orElseThrow(() -> new RuntimeException("Asset not found"));
+        
+        // VALIDATION: Cannot move if EXPENDED
+        if ("EXPENDED".equals(asset.getStatus())) {
+            throw new RuntimeException("Cannot transfer an EXPENDED asset.");
+        }
+
         Base source = baseRepository.findById(sourceBaseId).orElseThrow(() -> new RuntimeException("Source Base not found"));
         Base dest = baseRepository.findById(destBaseId).orElseThrow(() -> new RuntimeException("Dest Base not found"));
 
@@ -58,6 +61,11 @@ public class AssetService {
 
     public void assignAsset(Long id, String soldierName) {
         Asset asset = assetRepository.findById(id).orElseThrow(() -> new RuntimeException("Asset not found"));
+        
+        if (!"ACTIVE".equals(asset.getStatus())) {
+            throw new RuntimeException("Asset is " + asset.getStatus() + ". Only ACTIVE assets can be assigned.");
+        }
+
         asset.setStatus("ASSIGNED");
         assetRepository.save(asset);
 
@@ -66,17 +74,17 @@ public class AssetService {
 
     public void expendAsset(Long id) {
         Asset asset = assetRepository.findById(id).orElseThrow(() -> new RuntimeException("Asset not found"));
+        
+        if ("EXPENDED".equals(asset.getStatus())) {
+            throw new RuntimeException("Asset is already EXPENDED.");
+        }
+
         asset.setStatus("EXPENDED");
         assetRepository.save(asset);
 
         auditLogRepository.save(new AuditLog("EXPEND", asset.getName(), "Asset consumed/damaged"));
     }
 
-    public List<TransferLog> getTransferHistory() {
-        return transferLogRepository.findAllByOrderByTimestampDesc();
-    }
-
-    public List<AuditLog> getAuditLogs() {
-        return auditLogRepository.findAllByOrderByTimestampDesc();
-    }
+    public List<TransferLog> getTransferHistory() { return transferLogRepository.findAllByOrderByTimestampDesc(); }
+    public List<AuditLog> getAuditLogs() { return auditLogRepository.findAllByOrderByTimestampDesc(); }
 }
