@@ -19,8 +19,8 @@ public class Asset {
     @Column(unique = true)
     private String serialNumber;
 
-    private String type; // WEAPON, VEHICLE, AMMO
-    private String status; // ACTIVE, TRANSIT, EXPENDED
+    private String type;
+    private String status;
 
     @ManyToOne
     @JoinColumn(name = "current_base_id")

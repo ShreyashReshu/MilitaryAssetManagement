@@ -13,7 +13,7 @@ import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
-// CRITICAL FIX: You MUST have "implements UserDetailsService"
+
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;

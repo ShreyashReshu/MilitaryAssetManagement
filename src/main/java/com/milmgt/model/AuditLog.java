@@ -1,4 +1,4 @@
-package com.milmgt.entity;
+package com.milmgt.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

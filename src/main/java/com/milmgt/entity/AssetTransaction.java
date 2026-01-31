@@ -18,7 +18,7 @@ public class AssetTransaction {
     @ManyToOne
     private Asset asset;
 
-    private String type; // TRANSFER, PURCHASE, EXPEND
+    private String type;
     private LocalDateTime timestamp;
     private String initiatedBy;
 

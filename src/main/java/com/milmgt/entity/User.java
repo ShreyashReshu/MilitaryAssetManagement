@@ -17,9 +17,9 @@ public class User {
     @Column(unique = true)
     private String username;
     private String password;
-    private String role; // ADMIN, BASE_COMMANDER, LOGISTICS
+    private String role;
 
     @ManyToOne
     @JoinColumn(name = "base_id")
-    private Base base; // Optional: Only for Commanders
+    private Base base;
 }

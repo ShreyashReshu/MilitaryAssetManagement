@@ -26,7 +26,6 @@ public class AuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                // Fix: Use role from request, default to USER if missing
                 .role(request.getRole() != null ? request.getRole() : "USER") 
                 .build();
         userRepository.save(user);

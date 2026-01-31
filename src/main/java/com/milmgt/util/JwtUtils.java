@@ -12,10 +12,8 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtils {
-    // In a real app, use a strong environment variable for this
     private static final String SECRET_KEY = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
-    // THIS IS THE METHOD THAT WAS MISSING OR MISMATCHED
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userDetails.getUsername());

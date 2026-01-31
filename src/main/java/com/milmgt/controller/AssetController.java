@@ -1,6 +1,7 @@
 package com.milmgt.controller;
 
-import com.milmgt.entity.Asset; // FIXED
+import com.milmgt.entity.Asset;
+import com.milmgt.entity.AuditLog;
 import com.milmgt.model.TransferLog;
 import com.milmgt.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,7 @@ import java.util.Map;
 @RequestMapping("/api/assets")
 public class AssetController {
 
-    @Autowired
-    private AssetService assetService;
+    @Autowired private AssetService assetService;
 
     @GetMapping
     public List<Asset> getAllAssets() { return assetService.getAllAssets(); }
@@ -37,7 +37,8 @@ public class AssetController {
     }
 
     @GetMapping("/transfers/history")
-    public List<TransferLog> getTransferHistory() {
-        return assetService.getTransferHistory();
-    }
+    public List<TransferLog> getTransferHistory() { return assetService.getTransferHistory(); }
+
+    @GetMapping("/audit-logs")
+    public List<AuditLog> getAuditLogs() { return assetService.getAuditLogs(); }
 }

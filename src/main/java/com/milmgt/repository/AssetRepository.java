@@ -6,9 +6,7 @@ import java.util.List;
 
 public interface AssetRepository extends JpaRepository<Asset, Long> {
     
-    // Filters for "View Assets"
     List<Asset> findByCurrentBaseId(Long baseId);
 
-    // Dashboard Math
     long countByStatus(String status);
 }

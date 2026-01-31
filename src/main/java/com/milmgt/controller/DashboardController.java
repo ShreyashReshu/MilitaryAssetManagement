@@ -22,20 +22,18 @@ public class DashboardController {
     public ResponseEntity<Map<String, Object>> getMetrics() {
         Map<String, Object> metrics = new HashMap<>();
 
-        // Current Inventory
         metrics.put("totalAssets", assetRepo.count());
         metrics.put("activeAssets", assetRepo.countByStatus("ACTIVE"));
         metrics.put("assignedAssets", assetRepo.countByStatus("ASSIGNED"));
         metrics.put("expendedAssets", assetRepo.countByStatus("EXPENDED"));
 
-        // Net Movement Calculation
         long purchases = transRepo.findAll().stream().filter(t -> "PURCHASE".equals(t.getType())).count();
         long transfers = transRepo.findAll().stream().filter(t -> "TRANSFER".equals(t.getType())).count();
 
         Map<String, Long> movements = new HashMap<>();
         movements.put("purchases", purchases);
         movements.put("transfers", transfers);
-        movements.put("netMovement", purchases + transfers); // Simplified logic
+        movements.put("netMovement", purchases + transfers);
         
         metrics.put("movements", movements);
 
