@@ -24,12 +24,19 @@ public class AssetService {
     public List<Asset> getAllAssets() { return assetRepository.findAll(); }
 
     public Asset addAsset(Asset asset) {
+        if (asset.getName() == null || asset.getName().trim().isEmpty()) {
+            throw new RuntimeException("Asset name cannot be empty.");
+        }
+        if (asset.getSerialNumber() == null || asset.getSerialNumber().trim().isEmpty()) {
+            throw new RuntimeException("Serial number cannot be empty.");
+        }
         if (asset.getCurrentBase() == null || asset.getCurrentBase().getId() == null) {
             throw new RuntimeException("Asset must be assigned to a Base (ID required)");
         }
 
-        String trimmedSerial = asset.getSerialNumber() != null ? asset.getSerialNumber().trim() : null;
+        String trimmedSerial = asset.getSerialNumber().trim();
         asset.setSerialNumber(trimmedSerial);
+        asset.setName(asset.getName().trim());
 
         if (assetRepository.findBySerialNumberIgnoreCase(trimmedSerial).isPresent()) {
             throw new RuntimeException("Error: Serial Number '" + trimmedSerial + "' already exists.");
