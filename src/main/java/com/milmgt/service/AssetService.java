@@ -9,6 +9,7 @@ import com.milmgt.repository.BaseRepository;
 import com.milmgt.repository.TransferLogRepository;
 import com.milmgt.repository.AuditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,16 +33,19 @@ public class AssetService {
         
         asset.setCurrentBase(base);
         asset.setStatus("ACTIVE");
-        Asset saved = assetRepository.save(asset);
 
-        auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
-        return saved;
+        try {
+            Asset saved = assetRepository.save(asset);
+            auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Error: Serial Number '" + asset.getSerialNumber() + "' already exists.");
+        }
     }
 
     public void transferAsset(Long assetId, Long sourceBaseId, Long destBaseId) {
         Asset asset = assetRepository.findById(assetId).orElseThrow(() -> new RuntimeException("Asset not found"));
         
-        // VALIDATION: Cannot move if EXPENDED
         if ("EXPENDED".equals(asset.getStatus())) {
             throw new RuntimeException("Cannot transfer an EXPENDED asset.");
         }

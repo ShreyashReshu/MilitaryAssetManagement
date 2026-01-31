@@ -4,6 +4,7 @@ import com.milmgt.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // Import this
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,7 +25,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter; 
-    
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
@@ -34,7 +34,17 @@ public class SecurityConfig {
             .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                .requestMatchers(HttpMethod.POST, "/api/assets").hasAnyAuthority("ADMIN", "LOGISTICS")
+
+                .requestMatchers("/api/assets/transfer").hasAnyAuthority("ADMIN", "LOGISTICS", "COMMANDER")
+
+                .requestMatchers(HttpMethod.PUT, "/api/assets/*/assign").hasAnyAuthority("ADMIN", "COMMANDER")
+                .requestMatchers(HttpMethod.PUT, "/api/assets/*/expend").hasAnyAuthority("ADMIN", "COMMANDER")
+
+                .requestMatchers(HttpMethod.GET, "/api/assets/**").authenticated()
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
