@@ -31,6 +31,7 @@ public class AssetService {
         Base base = baseRepository.findById(asset.getCurrentBase().getId())
                 .orElseThrow(() -> new RuntimeException("Base not found"));
         
+        asset.setId(null);
         asset.setCurrentBase(base);
         asset.setStatus("ACTIVE");
 
@@ -39,7 +40,7 @@ public class AssetService {
             auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
             return saved;
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Error: Serial Number '" + asset.getSerialNumber() + "' already exists.");
+            throw new RuntimeException("Error: Serial Number must be unique, or Database ID sequence is out of sync.");
         }
     }
 
