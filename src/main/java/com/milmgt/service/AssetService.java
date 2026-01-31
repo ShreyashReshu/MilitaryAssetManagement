@@ -9,7 +9,6 @@ import com.milmgt.repository.BaseRepository;
 import com.milmgt.repository.TransferLogRepository;
 import com.milmgt.repository.AuditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException; // Required import
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,23 +27,24 @@ public class AssetService {
         if (asset.getCurrentBase() == null || asset.getCurrentBase().getId() == null) {
             throw new RuntimeException("Asset must be assigned to a Base (ID required)");
         }
+
+        String trimmedSerial = asset.getSerialNumber() != null ? asset.getSerialNumber().trim() : null;
+        asset.setSerialNumber(trimmedSerial);
+
+        if (assetRepository.findBySerialNumberIgnoreCase(trimmedSerial).isPresent()) {
+            throw new RuntimeException("Error: Serial Number '" + trimmedSerial + "' already exists.");
+        }
+
         Base base = baseRepository.findById(asset.getCurrentBase().getId())
                 .orElseThrow(() -> new RuntimeException("Base not found"));
         
-        // FIX 1: Force ID to null to prevent "Update" behavior on existing IDs
         asset.setId(null);
         asset.setCurrentBase(base);
         asset.setStatus("ACTIVE");
 
-        try {
-            // FIX 2: Try to save, catch duplicates
-            Asset saved = assetRepository.save(asset);
-            auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
-            return saved;
-        } catch (DataIntegrityViolationException e) {
-            // Returns a clear error if Serial Number exists
-            throw new RuntimeException("Error: Serial Number '" + asset.getSerialNumber() + "' already exists.");
-        }
+        Asset saved = assetRepository.save(asset);
+        auditLogRepository.save(new AuditLog("PURCHASE", saved.getName(), "Base: " + base.getName()));
+        return saved;
     }
 
     public void transferAsset(Long assetId, Long sourceBaseId, Long destBaseId) {
