@@ -2,8 +2,10 @@ package com.milmgt.controller;
 
 import com.milmgt.entity.Asset;
 import com.milmgt.entity.AuditLog;
+import com.milmgt.entity.Base;
 import com.milmgt.model.TransferLog;
 import com.milmgt.service.AssetService;
+import com.milmgt.repository.BaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.Map;
 public class AssetController {
 
     @Autowired private AssetService assetService;
+    @Autowired private BaseRepository baseRepository;
 
     @GetMapping
     public List<Asset> getAllAssets() { return assetService.getAllAssets(); }
@@ -41,4 +44,7 @@ public class AssetController {
 
     @GetMapping("/audit-logs")
     public List<AuditLog> getAuditLogs() { return assetService.getAuditLogs(); }
+
+    @GetMapping("/bases")
+    public List<Base> getAllBases() { return baseRepository.findAll(); }
 }

@@ -1,13 +1,9 @@
 -- ========================================================================
--- MILITARY ASSET MANAGEMENT SYSTEM - DATABASE SETUP
--- PostgreSQL Dump File
--- ========================================================================
--- This file contains the complete database schema and initial data
--- for the Military Asset Management System
+-- MILITARY ASSET MANAGEMENT SYSTEM - DATABASE SETUP & USER GUIDE
 -- ========================================================================
 
 -- ========================================================================
--- 1. CLEANUP: Start Fresh (Drop everything safely)
+-- 1. CLEANUP: Start Fresh
 -- ========================================================================
 
 DROP TABLE IF EXISTS transfer_log CASCADE;
@@ -80,7 +76,7 @@ CREATE TABLE audit_log (
 );
 
 -- ========================================================================
--- 3. CREATE INDEXES FOR PERFORMANCE
+-- 3. CREATE INDEXES
 -- ========================================================================
 
 CREATE INDEX idx_assets_serial_number ON assets(serial_number);
@@ -91,7 +87,7 @@ CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp);
 CREATE INDEX idx_transfer_log_timestamp ON transfer_log(timestamp);
 
 -- ========================================================================
--- 4. INSERT BASE DATA (INDIAN MILITARY BASES)
+-- 4. INSERT BASE DATA
 -- ========================================================================
 
 INSERT INTO bases (name, location, commander_name, garrison_type) VALUES 
@@ -102,31 +98,80 @@ INSERT INTO bases (name, location, commander_name, garrison_type) VALUES
 ('Camp Bravo', 'Pune', 'Brig. Prakash Sharma', 'Storage');
 
 -- ========================================================================
--- 5. INSERT USER DATA (Password: password123, BCrypt Hashed)
--- BCrypt Hash: $2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm
+-- 5. USER SETUP INSTRUCTIONS (MANUAL REGISTRATION)
+-- ========================================================================
+/*
+   IMPORTANT: The 'users' table is intentionally left empty.
+   You must register users manually via Postman to ensure passwords are 
+   hashed correctly by the server.
+
+   API URL: https://militaryassetmanagement-2tbh.onrender.com/api/auth/register
+   Method: POST
+   Content-Type: application/json
+
+   --- COPY & PASTE THESE JSON BODIES INTO POSTMAN ---
+
+   1. ADMIN USER (Global Access)
+   {
+     "username": "admin_user",
+     "password": "password123",
+     "role": "ADMIN",
+     "baseId": null
+   }
+
+   2. LOGISTICS OFFICER (Indraprastha HQ)
+   {
+     "username": "logistics_officer",
+     "password": "password123",
+     "role": "LOGISTICS",
+     "baseId": 1
+   }
+
+   3. COMMANDER - DELHI (Indraprastha HQ)
+   {
+     "username": "commander_delhi",
+     "password": "password123",
+     "role": "COMMANDER",
+     "baseId": 1
+   }
+
+   4. COMMANDER - SIACHEN (Base ID 2)
+   {
+     "username": "commander_siachen",
+     "password": "password123",
+     "role": "COMMANDER",
+     "baseId": 2
+   }
+
+   5. COMMANDER - RANCHI (Base ID 3)
+   {
+     "username": "commander_ranchi",
+     "password": "password123",
+     "role": "COMMANDER",
+     "baseId": 3
+   }
+
+   6. COMMANDER - MUMBAI (Base ID 4)
+   {
+     "username": "commander_mumbai",
+     "password": "password123",
+     "role": "COMMANDER",
+     "baseId": 4
+   }
+
+   7. COMMANDER - PUNE (Base ID 5)
+   {
+     "username": "commander_pune",
+     "password": "password123",
+     "role": "COMMANDER",
+     "baseId": 5
+   }
+*/
+
+-- ========================================================================
+-- 6. INSERT ASSET DATA
 -- ========================================================================
 
-INSERT INTO users (username, password, role, base_id) VALUES 
--- Admin users (can manage everything)
-('admin_user', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'ADMIN', NULL),
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'ADMIN', 1),
-
--- Logistics officers (can create purchases and transfers)
-('logistics_officer', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'LOGISTICS', 1),
-('log_officer_delhi', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'LOGISTICS', 1),
-
--- Commanders (base-specific access)
-('commander_delhi', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'COMMANDER', 1),
-('commander_siachen', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'COMMANDER', 2),
-('commander_ranchi', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'COMMANDER', 3),
-('commander_mumbai', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'COMMANDER', 4),
-('commander_pune', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7.od.3.pm', 'COMMANDER', 5);
-
--- ========================================================================
--- 6. INSERT ASSET DATA (Rich Dataset with Mixed Statuses)
--- ========================================================================
-
--- VEHICLES (12 items)
 INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES 
 ('T-90 Bhishma Tank', 'TANK-IND-001', 'VEHICLE', 'ACTIVE', 1),
 ('T-90 Bhishma Tank', 'TANK-IND-002', 'VEHICLE', 'ASSIGNED', 2),
@@ -139,10 +184,7 @@ INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES
 ('Maruti Gypsy King', 'LMV-IND-009', 'VEHICLE', 'ACTIVE', 3),
 ('Mahindra Bolero Pik-Up', 'LMV-IND-010', 'VEHICLE', 'ASSIGNED', 2),
 ('Bharatiya Armoured Vehicle', 'BAV-IND-001', 'VEHICLE', 'ACTIVE', 1),
-('HMMWV Humvee', 'HMMWV-IND-001', 'VEHICLE', 'ASSIGNED', 4);
-
--- WEAPONS (16 items)
-INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES 
+('HMMWV Humvee', 'HMMWV-IND-001', 'VEHICLE', 'ASSIGNED', 4),
 ('INSAS Rifle 5.56mm', 'WPN-RIF-101', 'WEAPON', 'ASSIGNED', 3),
 ('INSAS Rifle 5.56mm', 'WPN-RIF-102', 'WEAPON', 'ACTIVE', 3),
 ('INSAS Rifle 5.56mm', 'WPN-RIF-103', 'WEAPON', 'ACTIVE', 1),
@@ -158,10 +200,7 @@ INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES
 ('9mm Service Pistol', 'WPN-PST-009', 'WEAPON', 'ACTIVE', 1),
 ('9mm Service Pistol', 'WPN-PST-010', 'WEAPON', 'ASSIGNED', 2),
 ('12 Gauge Combat Shotgun', 'WPN-SHG-001', 'WEAPON', 'ACTIVE', 5),
-('Heckler Koch MP5', 'WPN-MP5-001', 'WEAPON', 'ASSIGNED', 4);
-
--- AMMUNITION & EQUIPMENT (12 items)
-INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES 
+('Heckler Koch MP5', 'WPN-MP5-001', 'WEAPON', 'ASSIGNED', 4),
 ('5.56mm Ammo Crate (1000rds)', 'AMMO-556-001', 'AMMUNITION', 'ACTIVE', 3),
 ('5.56mm Ammo Crate (1000rds)', 'AMMO-556-002', 'AMMUNITION', 'ACTIVE', 1),
 ('7.62mm Ammo Crate (500rds)', 'AMMO-762-001', 'AMMUNITION', 'EXPENDED', 2),
@@ -176,66 +215,17 @@ INSERT INTO assets (name, serial_number, type, status, current_base_id) VALUES
 ('Satellite Communication System', 'EQ-SAT-COM-001', 'WEAPON', 'ACTIVE', 5);
 
 -- ========================================================================
--- 7. INSERT AUDIT LOG DATA (Transaction History)
+-- 7. INSERT LOG DATA
 -- ========================================================================
 
 INSERT INTO audit_log (action_type, asset_name, details, timestamp) VALUES 
 ('PURCHASE', 'T-90 Bhishma Tank', 'Base: Indraprastha HQ', NOW() - INTERVAL '30 days'),
-('PURCHASE', 'INSAS Rifle 5.56mm', 'Base: Dipatoli Cantonment', NOW() - INTERVAL '25 days'),
-('PURCHASE', 'AK-203 Assault Rifle', 'Base: Siachen Base Camp', NOW() - INTERVAL '20 days'),
 ('TRANSFER', 'T-90 Bhishma Tank', 'Transferred to Siachen Base Camp', NOW() - INTERVAL '15 days'),
 ('ASSIGN', 'INSAS Rifle 5.56mm', 'To: Sepoy Singh (Ranchi)', NOW() - INTERVAL '10 days'),
-('TRANSFER', 'AK-203 Assault Rifle', 'Moved to Pune Camp Bravo', NOW() - INTERVAL '8 days'),
-('ASSIGN', 'Dragunov SVD Sniper', 'To: Havildar Sharma', NOW() - INTERVAL '5 days'),
-('ASSIGN', 'Tata Safari GS800', 'To: Col. Verma', NOW() - INTERVAL '3 days'),
 ('EXPEND', 'Carl Gustaf M4 Launcher', 'Destroyed during training exercise', NOW() - INTERVAL '2 days'),
-('EXPEND', '7.62mm Ammo Crate (500rds)', 'Ammunition expended in operations', NOW() - INTERVAL '1 day'),
-('PURCHASE', '9mm Service Pistol', 'Base: Indraprastha HQ', NOW() - INTERVAL '1 day'),
 ('ASSIGN', 'Night Vision Goggles', 'To: Capt. Arun Kumar', NOW());
-
--- ========================================================================
--- 8. INSERT TRANSFER LOG DATA (Movement History)
--- ========================================================================
 
 INSERT INTO transfer_log (asset_name, source_base, dest_base, timestamp) VALUES 
 ('T-90 Bhishma Tank', 'Indraprastha HQ', 'Siachen Base Camp', NOW() - INTERVAL '15 days'),
 ('INSAS Rifle 5.56mm', 'Indraprastha HQ', 'Dipatoli Cantonment', NOW() - INTERVAL '12 days'),
-('AK-203 Assault Rifle', 'Dipatoli Cantonment', 'Siachen Base Camp', NOW() - INTERVAL '8 days'),
-('Ashok Leyland Stallion', 'Fort Alpha', 'Camp Bravo', NOW() - INTERVAL '5 days'),
-('Sig Sauer 716 Rifle', 'Indraprastha HQ', 'Fort Alpha', NOW() - INTERVAL '3 days'),
-('5.56mm Ammo Crate (1000rds)', 'Camp Bravo', 'Dipatoli Cantonment', NOW() - INTERVAL '2 days'),
-('Heckler Koch MP5', 'Indraprastha HQ', 'Fort Alpha', NOW() - INTERVAL '1 day'),
 ('Tata Safari GS800', 'Camp Bravo', 'Indraprastha HQ', NOW());
-
--- ========================================================================
--- 9. VERIFY SETUP
--- ========================================================================
-
--- Count records in each table
-SELECT 'Bases' as table_name, COUNT(*) as record_count FROM bases
-UNION ALL
-SELECT 'Users', COUNT(*) FROM users
-UNION ALL
-SELECT 'Assets', COUNT(*) FROM assets
-UNION ALL
-SELECT 'Audit Logs', COUNT(*) FROM audit_log
-UNION ALL
-SELECT 'Transfer Logs', COUNT(*) FROM transfer_log;
-
--- ========================================================================
--- DATABASE SETUP COMPLETE
--- ========================================================================
--- Total Records:
--- Bases: 5
--- Users: 9 (1 ADMIN, 1 general ADMIN, 2 LOGISTICS, 5 COMMANDERS)
--- Assets: 40 (12 Vehicles, 16 Weapons, 12 Ammunition/Equipment)
--- Audit Logs: 12 transactions
--- Transfer Logs: 8 transfers
---
--- Login Credentials (all passwords: password123):
--- - admin_user / password123
--- - logistics_officer / password123
--- - commander_delhi / password123
--- - commander_siachen / password123
--- - commander_ranchi / password123
--- ========================================================================
