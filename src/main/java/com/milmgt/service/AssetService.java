@@ -2,13 +2,16 @@ package com.milmgt.service;
 
 import com.milmgt.entity.Asset;
 import com.milmgt.entity.Base;
+import com.milmgt.entity.User;
 import com.milmgt.entity.AuditLog;
 import com.milmgt.model.TransferLog;
 import com.milmgt.repository.AssetRepository;
 import com.milmgt.repository.BaseRepository;
+import com.milmgt.repository.UserRepository;
 import com.milmgt.repository.TransferLogRepository;
 import com.milmgt.repository.AuditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,10 +21,36 @@ public class AssetService {
 
     @Autowired private AssetRepository assetRepository;
     @Autowired private BaseRepository baseRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private TransferLogRepository transferLogRepository;
     @Autowired private AuditLogRepository auditLogRepository;
 
-    public List<Asset> getAllAssets() { return assetRepository.findAll(); }
+    /**
+     * Get all assets - filtered by role
+     * ADMIN: See all assets
+     * LOGISTICS: See all assets
+     * COMMANDER: See only assets from their base
+     */
+    public List<Asset> getAllAssets() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username).orElse(null);
+        
+        if (user == null) {
+            return assetRepository.findAll();
+        }
+        
+        // ADMIN and LOGISTICS can see all assets
+        if ("ADMIN".equals(user.getRole()) || "LOGISTICS".equals(user.getRole())) {
+            return assetRepository.findAll();
+        }
+        
+        // COMMANDER and others can only see assets from their base
+        if (user.getBase() != null) {
+            return assetRepository.findByCurrentBaseId(user.getBase().getId());
+        }
+        
+        return assetRepository.findAll();
+    }
 
     public Asset addAsset(Asset asset) {
         if (asset.getName() == null || asset.getName().trim().isEmpty()) {
